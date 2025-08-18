@@ -1,0 +1,119 @@
+# Tài liệu Kiến trúc Frontend: Social Blog App
+
+Tài liệu này định nghĩa kiến trúc tổng thể, các công nghệ nền tảng và các quy ước cho dự án frontend. Nó là bản thiết kế chính để AI agent và các quy tắc trong `.cursorrules` tuân theo.
+
+## 1. Công nghệ nền tảng (Tech Stack)
+
+- **Framework:** React 18+ & TypeScript
+- **Công cụ Build:** Vite
+- **Styling:** Tailwind CSS 3
+- **Routing:** React Router v6 (`react-router-dom`)
+- **Gọi API:** Axios
+- **Quản lý State Toàn cục:** **Zustand** là lựa chọn duy nhất cho state global.
+- **Thư viện Icons:** `react-icons`
+- **Quản lý Class:** `clsx` và `tailwind-merge` để xử lý class có điều kiện.
+
+## 2. Cấu trúc Thư mục
+
+Dự án tuân thủ cấu trúc dựa trên chức năng (feature-based).
+/src
+├── api/
+│ ├── axiosConfig.ts # ✨ Cấu hình instance Axios global
+│ └── postService.ts # ✨ Ví dụ: export const getPosts = async () => { ... }
+│
+├── components/
+│ ├── common/ # ✨ Button.tsx, Input.tsx, Modal.tsx, Spinner.tsx
+│ └── layout/ # ✨ Navbar.tsx, Sidebar.tsx, MainLayout.tsx
+│
+├── features/ # ✨ Cấu trúc bên trong một feature
+│ ├── post/
+│ │ ├── components/ # PostCard.tsx, CommentSection.tsx
+│ │ ├── hooks/ # useFetchPosts.ts
+│ │ ├── types.ts # Định nghĩa các type chỉ dùng trong feature này
+│ │ └── FeedPage.tsx # Component trang chính của feature
+│
+├── hooks/ # Hooks tái sử dụng toàn cục
+│ └── useAuthStatus.ts
+│
+├── lib/ or utils/ # Hàm tiện ích thuần túy
+│ └── formatDate.ts
+│
+├── providers/ # React Context Providers (nếu cần)
+│
+├── stores/ # Định nghĩa các store của Zustand
+│ └── authStore.ts
+│
+├── App.tsx # Logic routing chính
+└── main.tsx
+
+
+
+## 3. Luồng dữ liệu và Quản lý State
+
+- **State Toàn cục (Zustand):** Chỉ dành cho những state thực sự global như thông tin xác thực.
+  - **Ví dụ về `authStore.ts`:**
+    ```typescript
+    import { create } from 'zustand';
+
+    interface IAuthState {
+      user: User | null;
+      token: string | null;
+      login: (userData: User, token: string) => void;
+      logout: () => void;
+    }
+
+    export const useAuthStore = create<IAuthState>((set) => ({
+      user: null,
+      token: null,
+      login: (user, token) => set({ user, token }),
+      logout: () => set({ user: null, token: null }),
+    }));
+    ```
+- **State Máy chủ (Server State):** Quản lý qua các **custom hooks** trong thư mục `features/**/hooks/`. Mỗi hook chịu trách nhiệm fetch, cache, và quản lý (loading, error) cho một nguồn dữ liệu cụ thể.
+- **State Cục bộ (Local State):** Luôn ưu tiên `useState` cho state của một component.
+
+## 4. Routing (React Router v6)
+
+- **Routes được bảo vệ (Protected Routes):** Một component `ProtectedRoute.tsx` sẽ được tạo ra.
+- **Ví dụ về cách sử dụng trong `App.tsx`:**
+  ```tsx
+  import { useAuthStore } from './stores/authStore';
+
+  const ProtectedRoute = () => {
+    const { token } = useAuthStore();
+    return token ? <Outlet /> : <Navigate to="/login" replace />;
+  };
+
+  // Trong component App
+  <Routes>
+    <Route path="/login" element={<LoginPage />} />
+    <Route element={<ProtectedRoute />}>
+      <Route path="/" element={<FeedPage />} />
+      {/* Các route cần đăng nhập khác */}
+    </Route>
+  </Routes>
+  ```
+
+## 5. Styling và Theme (Tailwind CSS)
+- Quy ước:
+    1. Sử dụng các giá trị đã định nghĩa trong tailwind.config.js (ví dụ: bg-primary) thay vì các giá trị tùy ý.
+    2. Sử dụng clsx để ghép các class có điều kiện một cách sạch sẽ.
+- Component Variants: Đối với các component phức tạp có nhiều biến thể (ví dụ Button với variant, size), sử dụng thư viện cva (Class Variance Authority) để định nghĩa các biến thể này một cách có tổ chức.
+## 6. Giao tiếp với Backend (API Layer)
+- Nguyên tắc: Component không bao giờ được biết đến axios.
+- Tất cả các lệnh gọi API phải thông qua các hàm được export từ thư mục src/api/.
+- Ví dụ về một hàm service trong api/postService.ts:
+```tsx
+import { api } from './axiosConfig'; // Instance Axios đã cấu hình
+import { IPost } from '../features/post/types';
+export const getFeedPosts = async (): Promise<IPost[]> => {
+  try {
+    const response = await api.get<IPost[]>('/posts/feed');
+    return response.data;
+  } catch (error) {
+    // Xử lý lỗi, có thể log hoặc throw lại lỗi đã được định dạng
+    console.error("Failed to fetch feed posts:", error);
+    throw error;
+  }
+};
+```

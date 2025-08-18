@@ -1,0 +1,160 @@
+# Tài liệu API Endpoints: Social Blog Backend
+
+Tài liệu này là "nguồn chân lý duy nhất" cho tất cả các API endpoint mà backend cung cấp. Frontend sẽ dựa vào đây để xây dựng lớp giao tiếp dữ liệu.
+
+---
+
+## 1. Thông tin chung
+
+* **Base URL:** `/api`
+* **Xác thực:** Các route được đánh dấu `Private` yêu cầu một `Authorization: Bearer <JWT_TOKEN>` header.
+* **Kiểu dữ liệu:** Hầu hết các endpoint sử dụng `application/json`, trừ endpoint tạo bài viết sử dụng `multipart/form-data`.
+
+---
+
+## 2. Auth Endpoints 🔐
+
+**Prefix:** `/api/auth`
+
+### `POST /register`
+* **Access:** Public
+* **Description:** Đăng ký tài khoản mới.
+* **Request Body** (`application/json`):
+    ```json
+    {
+      "username": "string",
+      "email": "string",
+      "password": "string"
+    }
+    ```
+* **Success Response (201):**
+    ```json
+    {
+        "_id": "68a2cdf0cbf55d2c1c4fe61e",
+        "username": "testuser1",
+        "email": "test1@example.com",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4YTJjZGYwY2JmNTVkMmMxYzRmZTYxZSIsImlhdCI6MTc1NTUwMDAxNiwiZXhwIjoxNzU4MDkyMDE2fQ.qip_uRjP5rqtSqzXKSswkG-H_G-PJg1dPVdUgBtiuI4"
+    }
+    ```
+
+### `POST /login`
+* **Access:** Public
+* **Description:** Đăng nhập và nhận token.
+* **Request Body** (`application/json`):
+    ```json
+    {
+      "email": "string",
+      "password": "string"
+    }
+    ```
+* **Success Response (200):**
+    ```json
+    {
+      "_id": "68a2cdf0cbf55d2c1c4fe61e",
+      "username": "testuser1",
+      "email": "test1@example.com",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4YTJjZGYwY2JmNTVkMmMxYzRmZTYxZSIsImlhdCI6MTc1NTUwMDAxNiwiZXhwIjoxNzU4MDkyMDE2fQ.qip_uRjP5rqtSqzXKSswkG-H_G-PJg1dPVdUgBtiuI4"
+    }
+    ```
+
+---
+
+## 3. Post Endpoints 📝
+
+**Prefix:** `/api/posts`
+
+### `POST /`
+* **Access:** Private
+* **Description:** Tạo một bài viết mới (có thể kèm ảnh).
+* **Request Body** (`multipart/form-data`):
+    * `content`: "string"
+    * `image`: file (optional)
+* **Success Response (201):** Trả về đối tượng Post vừa được tạo.
+
+### `GET /`
+* **Access:** Private
+* **Description:** Lấy tất cả bài viết (dành cho trang khám phá). Hỗ trợ phân trang.
+* **Query Params:** `?page=<number>&limit=<number>`
+* **Success Response (200):**
+    ```json
+    {
+      "posts": "[Array of Post objects]",
+      "page": "number",
+      "totalPages": "number",
+      "totalPosts": "number"
+    }
+    ```
+
+### `GET /feed`
+* **Access:** Private
+* **Description:** Lấy bài viết từ những người dùng đang theo dõi. Hỗ trợ phân trang.
+* **Query Params:** `?page=<number>&limit=<number>`
+* **Success Response (200):** Cấu trúc tương tự `GET /`.
+
+### `GET /:id`
+* **Access:** Private
+* **Description:** Lấy chi tiết một bài viết.
+* **URL Params:** `id` (Post ID)
+* **Success Response (200):** Trả về một đối tượng Post đã được populate user và comments.
+
+### `DELETE /:id`
+* **Access:** Private
+* **Description:** Xóa một bài viết (chỉ chủ sở hữu).
+* **URL Params:** `id` (Post ID)
+* **Success Response (200):**
+    ```json
+    {
+      "message": "Post deleted successfully"
+    }
+    ```
+
+### `POST /:id/like`
+* **Access:** Private
+* **Description:** Thích hoặc bỏ thích một bài viết.
+* **URL Params:** `id` (Post ID)
+* **Success Response (200):**
+    ```json
+    {
+      "message": "Post unliked" //Post liked
+    }
+    ```
+
+### `POST /:id/comments`
+* **Access:** Private
+* **Description:** Thêm một bình luận vào bài viết.
+* **URL Params:** `id` (Post ID)
+* **Request Body** (`application/json`):
+    ```json
+    {
+      "text": "string"
+    }
+    ```
+* **Success Response (201):** Trả về đối tượng Comment vừa được tạo.
+
+---
+
+## 4. User Endpoints 🧑‍🤝‍🧑
+
+**Prefix:** `/api/users`
+
+### `POST /:id/follow`
+* **Access:** Private
+* **Description:** Theo dõi một người dùng.
+* **URL Params:** `id` (User ID to follow)
+* **Success Response (200):**
+    ```json
+    {
+      "message": "Followed user successfully"
+    }
+    ```
+
+### `POST /:id/unfollow`
+* **Access:** Private
+* **Description:** Bỏ theo dõi một người dùng.
+* **URL Params:** `id` (User ID to unfollow)
+* **Success Response (200):**
+    ```json
+    {
+      "message": "Unfollowed user successfully"
+    }
+    ```

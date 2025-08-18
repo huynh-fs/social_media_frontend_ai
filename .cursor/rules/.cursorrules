@@ -1,0 +1,62 @@
+# Rule: React Component Structure (TypeScript + FC)
+## Trigger
+src/**/*.tsx
+## Instruction
+All React components must be functional components using arrow function syntax and typed with `React.FC`.
+Props must be typed using a `type` alias or `interface` defined directly above the component, ending with the `Props` suffix (e.g., `type PostCardProps = { ... };`).
+Export components using a default export. Do not use named exports for components.
+
+# Rule: File and Folder Naming Convention
+## Trigger
+src/**/*
+## Instruction
+Strictly follow the naming convention defined in the architecture document.
+- Components, Pages, and their folders must be PascalCase (e.g., `src/features/post/components/PostCard/PostCard.tsx`).
+- Hooks, services, utils, stores, and config files must be camelCase (e.g., `src/hooks/useAuth.ts`, `src/api/postService.ts`).
+
+# Rule: API Calls Must Be in Service Layer
+## Trigger
+src/features/**/*.tsx, src/pages/**/*.tsx, src/components/**/*.tsx
+## Instruction
+Never make direct API calls (e.g., `axios.get`, `fetch`) from within a component file. All API interactions must be done by importing and calling functions from the `src/api/` directory. If a suitable service function doesn't exist, instruct the user to create one first.
+
+# Rule: Tailwind CSS Class Management
+## Trigger
+src/**/*.tsx
+## Instruction
+For components with conditional classes or multiple variants, use the `clsx` library to manage class strings. Do not use complex ternary operators or string concatenations for class names.
+Example: `className={clsx('base-class', isActive && 'active-class', props.className)}`
+
+# Rule: Custom Hook Structure and Naming
+## Trigger
+src/hooks/**/*.ts, src/features/**/hooks/**/*.ts
+## Instruction
+All custom hooks must start with the prefix `use` (e.g., `useAuthStatus`).
+They should encapsulate a specific piece of logic.
+If a hook returns multiple values, it must return them as an object with clearly named keys, not an array (unless it's a direct parallel to a built-in hook like `useState`).
+Example: `return { posts, isLoading, error };`
+
+# Rule: State Management Scoping
+## Trigger
+src/**/*.tsx
+## Instruction
+Follow the state management principles from the architecture document.
+- Default to `useState` for local component state.
+- Do not use `useContext` for global state; use a Zustand store instead.
+- Access global state from Zustand stores by importing the store and using its hook (e.g., `const user = useAuthStore(state => state.user);`).
+
+# Rule: Environment Variables Usage
+## Trigger
+src/**/*.ts, src/**/*.tsx
+## Instruction
+Always access environment variables through `import.meta.env` for Vite projects. The variable names must start with `VITE_`.
+Example: `const apiUrl = import.meta.env.VITE_API_URL;`
+Do not hardcode URLs, API keys, or other configuration secrets directly in the code.
+
+# Rule: Props Destructuring
+## Trigger
+src/**/*.tsx
+## Instruction
+Always destructure props in the function signature of a component.
+Good: `const MyComponent: React.FC<MyProps> = ({ title, user }) => { ... }`
+Bad: `const MyComponent: React.FC<MyProps> = (props) => { ... props.title ... }`
