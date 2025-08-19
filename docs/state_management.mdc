@@ -1,0 +1,80 @@
+# Tài liệu Quản lý State: Social Blog App
+
+Tài liệu này định nghĩa chiến lược và cấu trúc cho việc quản lý state toàn cục trong ứng dụng, sử dụng thư viện **Zustand**.
+
+## 1. Nguyên tắc chung
+
+- **Zustand cho State Toàn cục:** Chỉ những state cần được truy cập hoặc thay đổi từ nhiều nhánh component không liên quan trực tiếp mới được đưa vào Zustand.
+- **State Máy chủ KHÔNG nằm trong Store:** Dữ liệu từ server như danh sách bài viết, chi tiết người dùng, etc., sẽ được quản lý bởi các custom hooks (`useFetchPosts`) và không được lưu trữ trong state global của Zustand. Zustand chỉ lưu những thứ đại diện cho trạng thái của *ứng dụng*, không phải bản sao của *cơ sở dữ liệu*.
+- **State Cục bộ là ưu tiên:** Luôn sử dụng `useState` cho các state chỉ thuộc về một component (ví dụ: trạng thái hiển thị của dropdown, giá trị của một ô input).
+
+---
+
+## 2. `authStore` - Cửa hàng Xác thực
+
+Đây là store quan trọng nhất, quản lý toàn bộ trạng thái đăng nhập của người dùng.
+
+- **Vị trí file:** `src/stores/authStore.ts`
+- **Mục tiêu:**
+  - Lưu trữ thông tin người dùng (`user`) và token (`token`) sau khi đăng nhập thành công.
+  - Cung cấp các "actions" (hàm) để thực hiện đăng nhập, đăng xuất.
+  - Cung cấp một cách để các component khác có thể "lắng nghe" sự thay đổi của trạng thái xác thực.
+  - Tích hợp với `localStorage` để duy trì trạng thái đăng nhập sau khi tải lại trang.
+
+### 2.1. Cấu trúc State và Actions (`IAuthState` interface)
+
+```typescript
+// Định nghĩa type cho đối tượng User trả về từ API
+interface AuthUser {
+  _id: string;
+  username: string;
+}
+
+// Interface cho state và actions của store
+interface IAuthState {
+  user: AuthUser | null;
+  token: string | null;
+  isAuthenticated: boolean; // Computed state
+  actions: {
+    login: (token: string, user: AuthUser) => void;
+    logout: () => void;
+    checkAuth: () => void; // Kiểm tra auth từ localStorage khi app khởi động
+  }
+}
+2.2. Logic triển khai
+login(token, user):
+Cập nhật state: set({ user, token, isAuthenticated: true }).
+Lưu token và user vào localStorage.
+Cấu hình axiosConfig để tự động đính kèm token vào các request sau này.
+logout():
+Cập nhật state: set({ user: null, token: null, isAuthenticated: false }).
+Xóa token và user khỏi localStorage.
+Cấu hình axiosConfig để gỡ bỏ token khỏi header.
+checkAuth():
+Được gọi một lần duy nhất khi ứng dụng khởi động (trong App.tsx).
+Đọc token và user từ localStorage.
+Nếu có, gọi action login() để khôi phục trạng thái.
+2.3. Cách sử dụng trong Component
+Để lấy state:
+code
+Tsx
+import { useAuthStore } from '../stores/authStore';
+
+const user = useAuthStore((state) => state.user);
+const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+Để gọi actions:
+code
+Tsx
+import { useAuthStore } from '../stores/authStore';
+
+const { login, logout } = useAuthStore((state) => state.actions);
+
+const handleLogin = () => {
+  // ... call apiService.login ...
+  login(response.token, response.user);
+}
+3. Các Store Khác (Tương lai)
+Khi ứng dụng phát triển, có thể cần thêm các store khác. Ví dụ:
+notificationStore: Quản lý việc hiển thị các thông báo toast (thành công, lỗi) trên toàn ứng dụng.
+modalStore: Quản lý trạng thái đóng/mở của các modal global.
+Mỗi store mới đều phải tuân theo cấu trúc tương tự authStore: tách biệt state và actions, và chỉ chứa những state thực sự cần thiết ở phạm vi toàn cục.

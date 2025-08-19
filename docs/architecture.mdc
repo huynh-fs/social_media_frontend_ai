@@ -25,12 +25,17 @@ Dự án tuân thủ cấu trúc dựa trên chức năng (feature-based).
 │ ├── common/ # ✨ Button.tsx, Input.tsx, Modal.tsx, Spinner.tsx
 │ └── layout/ # ✨ Navbar.tsx, Sidebar.tsx, MainLayout.tsx
 │
-├── features/ # ✨ Cấu trúc bên trong một feature
-│ ├── post/
-│ │ ├── components/ # PostCard.tsx, CommentSection.tsx
-│ │ ├── hooks/ # useFetchPosts.ts
-│ │ ├── types.ts # Định nghĩa các type chỉ dùng trong feature này
-│ │ └── FeedPage.tsx # Component trang chính của feature
+├── features/
+│   ├── auth/
+│   ├── post/
+│   ├── navigation/
+│   │   └── components/       # SidebarNav, UserProfileMenu
+│   ├── explore/              # ✨ Feature mới
+│   │   ├── components/       # TrendingTopics.tsx
+│   │   └── ExplorePanel.tsx  # Component chính cho cột phải
+│   ├── notifications/        # ✨ Feature mới
+│   │   ├── components/       # NotificationItem.tsx
+│   │   └── NotificationsPanel.tsx
 │
 ├── hooks/ # Hooks tái sử dụng toàn cục
 │ └── useAuthStatus.ts
@@ -74,26 +79,34 @@ Dự án tuân thủ cấu trúc dựa trên chức năng (feature-based).
 
 ## 4. Routing (React Router v6)
 
-- **Routes được bảo vệ (Protected Routes):** Một component `ProtectedRoute.tsx` sẽ được tạo ra.
-- **Ví dụ về cách sử dụng trong `App.tsx`:**
+## 4. Routing (React Router v6 & Nested Routes)
+
+- **Cấu trúc lồng nhau:** Ứng dụng sẽ sử dụng nested routes để quản lý nội dung động ở cột bên phải.
+- **Component Layout gốc:** `MainLayout` sẽ là route cha.
+- **Component `<Outlet />`:** Sẽ được đặt trong cột bên phải của `MainLayout`.
+- **Ví dụ về cách định nghĩa routes trong `App.tsx`:**
   ```tsx
-  import { useAuthStore } from './stores/authStore';
-
-  const ProtectedRoute = () => {
-    const { token } = useAuthStore();
-    return token ? <Outlet /> : <Navigate to="/login" replace />;
-  };
-
-  // Trong component App
   <Routes>
     <Route path="/login" element={<LoginPage />} />
-    <Route element={<ProtectedRoute />}>
-      <Route path="/" element={<FeedPage />} />
-      {/* Các route cần đăng nhập khác */}
+    <Route path="/register" element={<RegisterPage />} />
+    
+    {/* Route cha được bảo vệ */}
+    <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+      
+      {/* Route con mặc định (index) cho cột phải */}
+      <Route index element={<DefaultWidgetsPanel />} />
+      
+      {/* Các route con khác cho cột phải */}
+      <Route path="explore" element={<ExplorePanel />} />
+      <Route path="notifications" element={<NotificationsPanel />} />
+      <Route path="messages" element={<MessagesPanel />} />
+      
+      {/* Route profile có thể là một trang riêng hoặc cũng là một panel */}
+      <Route path="profile/:id" element={<ProfilePage />} /> 
+
     </Route>
   </Routes>
-  ```
-
+Lưu ý: Trang Feed chính ở cột giữa không còn là một "page" riêng lẻ, mà là một phần cố định của MainLayout.
 ## 5. Styling và Theme (Tailwind CSS)
 - Quy ước:
     1. Sử dụng các giá trị đã định nghĩa trong tailwind.config.js (ví dụ: bg-primary) thay vì các giá trị tùy ý.

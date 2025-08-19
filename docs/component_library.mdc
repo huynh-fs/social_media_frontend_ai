@@ -1,0 +1,296 @@
+# Tài liệu Thư viện Component: Social Blog App
+
+Tài liệu này là bản thiết kế chi tiết cho các component UI chung, tái sử dụng, nằm trong thư mục `src/components/common`.
+
+---
+
+## 1. Nguyên tắc thiết kế
+
+* **Tái sử dụng:** Các component phải được thiết kế để có thể tái sử dụng ở nhiều nơi.
+* **Không chứa logic nghiệp vụ:** Các component này không được biết về `Post`, `User` hay bất kỳ logic nghiệp vụ nào. Chúng chỉ nhận props và hiển thị UI.
+* **Styling qua Props:** Giao diện của component có thể được tùy chỉnh thông qua props (ví dụ: `variant`, `size`).
+* **Khả năng mở rộng:** Cho phép truyền `className` từ bên ngoài để ghi đè hoặc bổ sung style.
+
+---
+
+## 2. Danh sách Component
+
+### 2.1. Button (`src/components/common/Button.tsx`)
+
+* **Mục tiêu:** Một component nút bấm nhất quán trên toàn ứng dụng.
+* **Props Interface** (`ButtonProps`):
+    ```typescript
+    interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+      variant?: 'primary' | 'secondary' | 'danger';
+      size?: 'sm' | 'md' | 'lg';
+      isLoading?: boolean;
+      children: React.ReactNode;
+    }
+    ```
+* **Styling (Tailwind CSS & CVA):**
+    * **`primary` (mặc định):** Nền xanh (`bg-blue-600`), chữ trắng (`text-white`), hover tối hơn (`hover:bg-blue-700`).
+    * **`secondary`:** Nền trong suốt, viền xám (`border border-gray-300`), chữ đen, hover có nền xám nhạt (`hover:bg-gray-100`).
+    * **`danger`:** Nền đỏ (`bg-red-600`), chữ trắng, hover tối hơn (`hover:bg-red-700`).
+    * **Khi `isLoading`:** Nút bị vô hiệu hóa (`disabled`), hiển thị component `Spinner` bên trong, và con trỏ chuột `cursor-not-allowed`.
+* **Hành vi:** Truyền tất cả các props còn lại (ví dụ `onClick`, `type`) vào thẻ `<button>` gốc.
+
+### 2.2. Input (`src/components/common/Input.tsx`)
+
+* **Mục tiêu:** Một ô nhập liệu chuẩn cho các form.
+* **Props Interface** (`InputProps`):
+    ```typescript
+    interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+      label?: string;
+      error?: string;
+    }
+    ```
+* **Cấu trúc:**
+    * Một `div` bọc ngoài.
+    * Một thẻ `<label>` nếu `label` prop được cung cấp.
+    * Thẻ `<input>` chính.
+    * Một thẻ `<p>` để hiển thị `error` message nếu có.
+* **Styling:**
+    * **Input:** Viền xám (`border-gray-300`), bo góc (`rounded-md`), có focus ring màu xanh (`focus:ring-blue-500`).
+    * **Khi có lỗi:** Viền chuyển sang màu đỏ (`border-red-500`), focus ring màu đỏ (`focus:ring-red-500`).
+    * **Error message:** Chữ nhỏ, màu đỏ (`text-sm text-red-600`).
+
+### 2.3. Spinner (`src/components/common/Spinner.tsx`)
+
+* **Mục tiêu:** Một icon loading để chỉ báo trạng thái tải.
+* **Props Interface** (`SpinnerProps`):
+    ```typescript
+    interface SpinnerProps {
+      size?: 'sm' | 'md' | 'lg'; // 'md' is default
+    }
+    ```
+* **Styling:**
+    * Một `div` hình tròn (`rounded-full`), có viền trên trong suốt và các viền còn lại có màu (ví dụ `border-t-transparent border-blue-600`).
+    * Có animation quay (`animate-spin`).
+    * `size` sẽ quyết định `width` và `height` (ví dụ `w-8 h-8`).
+
+### 2.4. Modal (`src/components/common/Modal.tsx`)
+
+* **Mục tiêu:** Một hộp thoại popup để hiển thị nội dung quan trọng hoặc form.
+* **Props Interface** (`ModalProps`):
+    ```typescript
+    interface ModalProps {
+      isOpen: boolean;
+      onClose: () => void;
+      title: string;
+      children: React.ReactNode;
+    }
+    ```
+* **Cấu trúc:**
+    * Sử dụng **Portal** (`ReactDOM.createPortal`) để render modal ở gốc của body.
+    * Một lớp nền mờ (`div` cố định, toàn màn hình, màu đen mờ).
+    * Hộp thoại modal chính ở giữa màn hình.
+    * Có tiêu đề (`title`) và nút đóng (icon 'X').
+* **Hành vi:** Nhấn vào lớp nền mờ hoặc nút 'X' sẽ gọi hàm `onClose`.
+
+## 3. Bố cục và Component "Phân tử"
+
+Đây là các component lớn hơn, định hình cấu trúc và giao diện chính của ứng dụng.
+
+### 3.1. MainLayout (`src/components/layout/MainLayout.tsx`)
+
+- **Mục tiêu:** Tạo ra bố cục 3 cột kinh điển của các mạng xã hội. Bố cục này sẽ bao bọc hầu hết các trang của ứng dụng.
+- **Cấu trúc (Desktop):**
+  - Một `div` container chính với `max-width` và canh giữa (`max-w-7xl mx-auto`).
+  - Sử dụng `grid` của Tailwind CSS để tạo 3 cột (`grid-cols-12 gap-8`).
+  - **Cột Trái (Sidebar):** Chiếm 3/12 (`col-span-3`). Đây sẽ là nơi chứa `SidebarNav`.
+  - **Cột Giữa (Main Content):** Chiếm 6/12 (`col-span-6`). Đây là nơi nội dung chính của trang sẽ được hiển thị (sử dụng `children` prop).
+  - **Cột Phải (Widgets):** Chiếm 3/12 (`col-span-3`). Đây sẽ là nơi chứa các widget như "Who to follow".
+- **Cấu trúc (Mobile):**
+  - Trên màn hình nhỏ (`< lg`), bố cục chuyển thành 1 cột duy nhất. Cột trái và phải có thể bị ẩn hoặc chuyển xuống dưới.
+- **Props:**
+  ```typescript
+  interface MainLayoutProps {
+    children: React.ReactNode;
+  }
+3.2. SidebarNav (src/features/navigation/components/SidebarNav.tsx)
+Mục tiêu: Thanh điều hướng chính ở cột bên trái.
+Cấu trúc:
+Một div chứa một danh sách (<ul>) các mục điều hướng.
+Mỗi mục (<li>) là một NavLink từ react-router-dom.
+Các mục bao gồm: "Home", "Explore", "Notifications", "Messages", "Profile".
+Mỗi mục có một icon từ react-icons và một nhãn văn bản.
+Styling:
+Sử dụng flex items-center space-x-4.
+Các mục có padding (p-3), bo góc (rounded-full), và hiệu ứng hover (hover:bg-gray-200).
+Mục đang được kích hoạt (active class từ NavLink) sẽ có chữ đậm (font-bold).
+Tương tác:
+Dưới cùng có một nút "Post" lớn, nổi bật (sử dụng component Button với variant='primary').
+Hiển thị thông tin người dùng đã đăng nhập (avatar, username) ở dưới cùng.
+3.3. PostCard (src/features/post/components/PostCard/PostCard.tsx)
+Mục tiêu: Hiển thị một bài viết duy nhất. Đây là component cốt lõi của dòng thời gian.
+Cấu trúc:
+Container chính (div): Nền trắng (bg-white), viền (border), padding (p-4).
+Header: Avatar người dùng, tên người dùng (font-bold), và dấu thời gian (text-sm text-gray-500). Sắp xếp bằng flex.
+Body: Nội dung văn bản của bài viết. Nếu có imageUrl, hiển thị hình ảnh bên dưới.
+Footer (Action Bar): Dãy các icon (Like, Comment, Share) với số đếm. Sử dụng flex và justify-between.
+Props (PostCardProps):
+code
+TypeScript
+interface PostCardProps {
+  post: IPost; // IPost là interface cho dữ liệu bài viết từ API
+  onLike: (postId: string) => void;
+  onComment: (postId: string) => void;
+}
+### 3.4. CreatePostForm (`src/features/post/components/CreatePostForm.tsx`)
+
+- **Mục tiêu:** Một widget "inline" ở đầu trang Feed, cho phép người dùng soạn và đăng bài viết một cách nhanh chóng.
+- **Vị trí:** `src/features/post/components/CreatePostForm.tsx`
+- **Cấu trúc:**
+  - Một `div` container chính, có nền trắng (`bg-white`), padding (`p-4`), và viền dưới (`border-b`).
+  - **Hàng trên (`flex space-x-4`):**
+    - `Avatar` của người dùng đang đăng nhập.
+    - `textarea` là phần tử chính, chiếm hết không gian còn lại.
+  - **`textarea`:**
+    - Styling: Không có viền (`border-none`), không có focus ring (`focus:ring-0`), tự động thay đổi chiều cao (`resize-none`), placeholder "What's happening?".
+  - **Preview Ảnh (Tùy chọn):**
+    - Một `div` sẽ xuất hiện bên dưới `textarea` nếu người dùng đã chọn ảnh.
+    - Hiển thị ảnh đã chọn với một nút 'X' ở góc để hủy bỏ.
+  - **Hàng dưới (`flex items-center justify-between mt-4`):**
+    - **Bên trái (Action Icons):**
+      - Một `label` cho thẻ `<input type="file" />` được ẩn đi, style giống như một nút icon (ví dụ: icon "Image" từ `react-icons`).
+      - Các icon khác (Emoji, Poll...) có thể thêm sau.
+    - **Bên phải (Submit Button):**
+      - Component `Button` (từ `common`) với nhãn "Post".
+- **State & Logic:**
+  - `useState` cho `content` (string) của `textarea`.
+  - `useState` cho `imageFile` (File | null) để lưu file ảnh người dùng chọn.
+  - `useState` cho `imagePreview` (string | null) để hiển thị ảnh đã chọn.
+  - Sử dụng một custom hook `useCreatePost` để xử lý logic gọi API, quản lý trạng thái `isLoading` và `error`.
+- **Hành vi & Tương tác:**
+  - `textarea` sẽ tự động tăng chiều cao khi người dùng gõ. (Có thể dùng thư viện `react-textarea-autosize`).
+  - Khi người dùng chọn một file ảnh, tạo một URL preview bằng `URL.createObjectURL()` và cập nhật state `imagePreview`.
+  - Nút "Post" sẽ bị vô hiệu hóa (`disabled`) nếu `content` trống VÀ không có `imageFile`.
+  - Khi form được submit:
+    1. Gọi hàm `createPost` từ hook `useCreatePost`, truyền vào `content` và `imageFile`.
+    2. Hook `useCreatePost` sẽ tạo một `FormData` object để gửi request `multipart/form-data`.
+    3. Sau khi post thành công, reset tất cả state của form (xóa content, image).
+    4. **Quan trọng:** Phải có cơ chế để cập nhật lại danh sách bài viết trên trang Feed (ví dụ: dùng React Query/SWR để tự động revalidate, hoặc gọi lại hàm fetch posts).
+
+## 4. Widget Components cho Sidebar Phải (Gói 2)
+
+Đây là các component chức năng sẽ được đặt trong cột bên phải của `MainLayout`.
+
+### 4.1. RightSidebar (`src/components/layout/RightSidebar.tsx`)
+
+- **Mục tiêu:** Component container chính cho cột bên phải.
+- **Cấu trúc:**
+  - Một `div` chính với `flex flex-col space-y-4`.
+  - Sẽ chứa các component widget con: `<SearchBar />`, `<FollowSuggestions />`.
+
+### 4.2. SearchBar (`src/features/search/components/SearchBar.tsx`)
+
+- **Mục tiêu:** Một ô tìm kiếm tương tác để tìm kiếm người dùng và bài viết.
+- **Cấu trúc:**
+  - Một `div` container với `position: relative`.
+  - Một `Input` component (từ `common`) với icon kính lúp bên trong.
+  - Một `div` khác đóng vai trò là dropdown kết quả, chỉ hiển thị khi có kết quả và ô tìm kiếm đang được focus.
+- **State:**
+  - `useState` để lưu trữ chuỗi tìm kiếm (`query`).
+  - `useState` để lưu trữ kết quả (`results`).
+  - `useState` để quản lý trạng thái loading.
+- **Hooks:**
+  - Sử dụng một custom hook `useDebounce` để tránh gọi API liên tục khi người dùng đang gõ.
+- **Logic:**
+  1. Khi `query` (đã debounce) thay đổi, gọi đến một custom hook `useSearch(debouncedQuery)`.
+  2. `useSearch` sẽ gọi API `GET /api/search?q=...`.
+  3. Hiển thị kết quả trong dropdown, được phân nhóm thành "Users" và "Posts".
+
+### 4.3. FollowSuggestions (`src/features/users/components/FollowSuggestions.tsx`)
+
+- **Mục tiêu:** Hiển thị một danh sách các tài khoản được gợi ý để theo dõi.
+- **Cấu trúc:**
+  - Một `div` card với nền xám nhạt (`bg-gray-100`), bo góc (`rounded-lg`), và padding (`p-4`).
+  - Tiêu đề "Who to follow".
+  - Một danh sách các `SuggestionItem`.
+- **Hooks:**
+  - Sử dụng một custom hook `useFollowSuggestions` để fetch dữ liệu từ `GET /api/users/suggestions`.
+- **Component con `SuggestionItem`:**
+  - **Props:** `user: { _id, username, avatarUrl }`.
+  - **Cấu trúc:**
+    - `div` với `flex items-center justify-between`.
+    - Bên trái: `Avatar` và `username`.
+    - Bên phải: `Button` component với `variant='secondary'` và nhãn "Follow".
+  - **State & Logic:**
+    - Có một state `isFollowing` (mặc định là `false`).
+    - Khi nhấn nút "Follow", gọi đến service API `followUser(user._id)`, set `isFollowing` thành `true`, và thay đổi giao diện của nút (ví dụ: thành "Following" và đổi màu).
+
+    ---
+## 6. Component Tương tác Phức tạp
+
+### 6.1. UserProfileMenu (`src/features/navigation/components/UserProfileMenu.tsx`)
+
+- **Mục tiêu:** Một menu dropdown (popover) hiển thị khi người dùng nhấp vào thông tin của họ ở cuối sidebar.
+- **Thư viện:** `@headlessui/react` (sử dụng component `Menu`).
+- **Cấu trúc (sử dụng Headless UI `Menu`):**
+  - Một `div` container chính với `position: relative`.
+  - **`Menu.Button`:**
+    - Đây là phần tử kích hoạt menu.
+    - Nó sẽ chứa component `UserInfo` (Avatar, Username).
+    - Styling: `cursor-pointer`, hiệu ứng hover (`hover:bg-gray-200`), bo tròn (`rounded-full`), padding (`p-2`).
+  - **`Menu.Items`:**
+    - Đây là panel dropdown, chỉ hiển thị khi menu được mở.
+    - Styling: `position: absolute`, đặt ở phía trên (`bottom-full mb-2`), nền trắng (`bg-white`), bo góc (`rounded-md`), có bóng mờ (`shadow-lg`), viền (`border`), và `z-index` cao.
+    - Sẽ chứa một danh sách các `Menu.Item`.
+  - **`Menu.Item`:**
+    - Mỗi mục là một lựa chọn trong menu.
+    - Styling: Phải có trạng thái `active` (khi hover hoặc dùng phím mũi tên) để đổi màu nền (`ui-active:bg-gray-100`).
+    - Các mục bao gồm:
+      - Link đến trang Profile (`/profile/{userId}`).
+      - Lựa chọn "Log out".
+- **State & Logic:**
+  - Component này sẽ lấy thông tin người dùng (`user`) từ `authStore`.
+  - Lựa chọn "Log out" sẽ gọi đến action `logout` từ `authStore`.
+- **Component con `UserInfo`:**
+  - Một component nhỏ, không có logic, chỉ để hiển thị avatar và username. Sẽ được `UserProfileMenu` sử dụng làm `Menu.Button`.
+
+### 6.2. Cập nhật `SidebarNav.tsx`
+
+- Component `SidebarNav` sẽ không còn chứa logic hiển thị thông tin người dùng trực tiếp.
+- Thay vào đó, nó sẽ render component `<UserProfileMenu />` ở vị trí cuối cùng.
+
+## 7. Component Dialog / Modal Chức năng
+
+### 7.1. EditProfileModal (`src/features/profile/components/EditProfileModal.tsx`)
+
+- **Mục tiêu:** Một dialog cho phép người dùng chỉnh sửa thông tin cá nhân của họ (tên hiển thị, tiểu sử, ảnh đại diện, ảnh bìa).
+- **Thư viện:** `@headlessui/react` (sử dụng `Dialog` và `Transition`).
+- **Props:**
+  ```typescript
+  interface EditProfileModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+  }
+Cấu trúc (sử dụng Headless UI Dialog):
+Component Transition bao bọc Dialog để tạo hiệu ứng mờ dần (fade-in/fade-out).
+Dialog.Overlay: Lớp nền mờ màu đen phía sau.
+Dialog.Panel: Đây là panel dialog chính.
+Styling: Nền trắng (bg-white), bo góc (rounded-lg), có bóng (shadow-xl), kích thước tối đa (max-w-lg), chiều rộngเต็ม (w-full), padding (p-6).
+Nội dung Panel:
+Header:
+Dialog.Title với nội dung "Edit Profile".
+Một nút đóng (icon 'X') ở góc trên bên phải để gọi onClose.
+Form:
+Ảnh bìa (Banner Image): Hiển thị ảnh bìa hiện tại, có một nút icon ở giữa để upload ảnh mới.
+Ảnh đại diện (Avatar): Hiển thị avatar hiện tại (chồng lên một phần ảnh bìa), cũng có nút icon để upload ảnh mới.
+Component Input cho "Display Name".
+Component Textarea cho "Bio" (tiểu sử).
+Footer:
+Nút "Cancel" (gọi onClose).
+Nút "Save" (loại submit cho form).
+State & Logic:
+Component sẽ quản lý trạng thái của form (displayName, bio, các file ảnh mới).
+Khi mở, nó sẽ fetch hoặc nhận dữ liệu profile hiện tại của người dùng để điền vào form.
+Khi submit, nó sẽ tạo một FormData object để gửi tất cả các thông tin đã thay đổi (bao gồm cả file ảnh nếu có) lên API backend.
+Sử dụng một custom hook useUpdateProfile để xử lý logic API, quản lý isLoading và error.
+7.2. Tích hợp
+State quản lý: Trạng thái isOpen của modal sẽ được quản lý trong component cha (ProfilePanel.tsx) bằng useState.
+code
+Tsx
+const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+Kích hoạt: Nút "Edit Profile" trong ProfilePanel.tsx sẽ gọi setIsEditModalOpen(true).
+Đóng: EditProfileModal sẽ gọi onClose={() => setIsEditModalOpen(false)} khi cần đóng.
