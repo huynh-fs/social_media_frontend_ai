@@ -22,7 +22,42 @@ const ProtectedRoute = () => {
 	return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
+import socketService from './sockets/socketService';
+import { useNotificationStore, initNotificationSocket } from './stores/notificationStore';
+
 export default function App() {
+
+	const token = localStorage.getItem('auth_token');
+	const setNotifications = useNotificationStore((s) => s.setNotifications);
+	const getProfile = useAuthStore((s) => s.getProfile);
+
+	useEffect(() => {
+		// Tự động connect lại socket khi reload nếu đã authenticate
+		const fetchProfile = async () => {
+			await getProfile();
+			const user = useAuthStore.getState().user;
+			socketService.connect(token!, user!._id);
+			initNotificationSocket();
+			// Fetch initial notifications from API
+			(async () => {
+				try {
+					const res = await fetch(`/api/notifications`, {
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					const data = await res.json();
+					setNotifications(data.notifications || []);
+				} catch {}
+			})();
+		};
+		if (token) {
+			fetchProfile();
+			
+		} else {
+			socketService.disconnect();
+			setNotifications([]);
+		}
+	}, [token, setNotifications]);
+
 	return (
 		<Routes>
 			<Route path="/login" element={<LoginPage />} />

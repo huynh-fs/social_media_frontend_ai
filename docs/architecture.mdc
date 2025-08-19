@@ -12,6 +12,7 @@ Tài liệu này định nghĩa kiến trúc tổng thể, các công nghệ n�
 - **Quản lý State Toàn cục:** **Zustand** là lựa chọn duy nhất cho state global.
 - **Thư viện Icons:** `react-icons`
 - **Quản lý Class:** `clsx` và `tailwind-merge` để xử lý class có điều kiện.
+- **Real-time:** `socket.io-client`
 
 ## 2. Cấu trúc Thư mục
 
@@ -20,6 +21,9 @@ Dự án tuân thủ cấu trúc dựa trên chức năng (feature-based).
 ├── api/
 │ ├── axiosConfig.ts # ✨ Cấu hình instance Axios global
 │ └── postService.ts # ✨ Ví dụ: export const getPosts = async () => { ... }
+│ └── notificationService.ts # Service cho API RESTful của notification
+├── sockets/
+│   └── socketService.ts     # ✨ Quản lý kết nối và sự kiện Socket.IO
 │
 ├── components/
 │ ├── common/ # ✨ Button.tsx, Input.tsx, Modal.tsx, Spinner.tsx

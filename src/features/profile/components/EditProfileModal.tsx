@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useAuthStore } from '../../../stores/authStore';
+import { FaImage } from 'react-icons/fa';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -106,7 +107,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
                     />
                     <label className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 cursor-pointer hover:bg-blue-700">
                       <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-                      <span className="text-xs">Edit</span>
+                      <span className="text-xs">
+                        <FaImage />
+                      </span>
                     </label>
                   </div>
                 </div>

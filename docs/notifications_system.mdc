@@ -1,0 +1,48 @@
+# Tài liệu Frontend: Hệ thống Thông báo Real-time
+
+Tài liệu này mô tả cách frontend kết nối và xử lý thông báo real-time.
+
+## 1. Quản lý Kết nối Socket (`src/sockets/socketService.ts`)
+
+- **Mục tiêu:** Tạo một module singleton để quản lý kết nối socket duy nhất trên toàn ứng dụng.
+- **Logic:**
+  - Export một instance `socket`.
+  - Có một hàm `connect(token, userId)`:
+    - Khởi tạo kết nối đến server Socket.IO.
+    - Gửi token để xác thực.
+    - Sau khi kết nối, emit sự kiện `addUser` với `userId` để server có thể map `userId` với `socket.id`.
+  - Có một hàm `disconnect()`.
+
+## 2. Tích hợp vào State Toàn cục (`notificationStore.ts`)
+
+- **Vị trí:** `src/stores/notificationStore.ts`
+- **Mục tiêu:** Quản lý state của thông báo trên toàn ứng dụng.
+- **Cấu trúc State:**
+  ```typescript
+  interface INotificationState {
+    notifications: INotification[];
+    unreadCount: number;
+    setNotifications: (notifications: INotification[]) => void;
+    addNotification: (notification: INotification) => void;
+    markAllAsRead: () => void;
+  }
+Logic:
+Khi người dùng đăng nhập, gọi socketService.connect().
+Lắng nghe sự kiện new_notification từ server. Khi nhận được, gọi action addNotification để thêm thông báo mới vào đầu danh sách và tăng unreadCount.
+Có thể phát ra âm thanh thông báo nhỏ.
+3. Component Giao diện
+NotificationsPanel.tsx
+Mục tiêu: Hiển thị danh sách thông báo ở cột phải.
+Logic:
+Lấy notifications từ notificationStore.
+Khi component được mount, kiểm tra xem có thông báo chưa đọc hay không (unreadCount > 0). Nếu có, gọi API để đánh dấu tất cả là đã đọc và cập nhật lại state trong store.
+Render danh sách các NotificationItem.
+NotificationItem.tsx
+Mục tiêu: Hiển thị một thông báo duy nhất.
+Cấu trúc:
+Avatar của người gửi (sender).
+Đoạn text mô tả hành động (ví dụ: "User A đã thích bài viết của bạn.").
+Dấu thời gian.
+Một chấm tròn màu xanh nếu read === false.
+Navbar / SidebarNav
+Hiển thị một badge (huy hiệu) với số unreadCount trên icon Notifications.

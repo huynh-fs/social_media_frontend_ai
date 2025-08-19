@@ -1,44 +1,35 @@
-import React, { useEffect, useState } from 'react';
-
-// Dummy API fetch function (replace with real API call)
-const fetchNotifications = async () => {
-  // Simulate API delay
-  await new Promise((r) => setTimeout(r, 500));
-  return [
-    { id: '1', message: 'User X liked your post', createdAt: '2m ago' },
-    { id: '2', message: 'User Y started following you', createdAt: '10m ago' },
-    { id: '3', message: 'User Z commented: "Nice!"', createdAt: '1h ago' },
-    { id: '4', message: 'User A shared your post', createdAt: '2h ago' },
-  ];
-};
+import React, { useEffect } from 'react';
+import { useNotificationStore } from '../../../stores/notificationStore';
+import NotificationItem from './NotificationItem';
 
 const NotificationsPanel: React.FC = () => {
-  const [notifications, setNotifications] = useState<Array<{ id: string; message: string; createdAt: string }>>([]);
-  const [loading, setLoading] = useState(true);
+  const notifications = useNotificationStore((s) => s.notifications);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
   useEffect(() => {
-    fetchNotifications().then((data) => {
-      setNotifications(data);
-      setLoading(false);
-    });
+    fetchNotifications();
   }, []);
 
+  useEffect(() => {
+    if (unreadCount > 0) {
+      // Optionally call API to mark all as read
+      markAllAsRead();
+    }
+  }, [unreadCount, markAllAsRead]);
+
   return (
-    <div className="bg-white rounded-lg shadow px-4 mt-6">
+    <div className="bg-white rounded-lg shadow p-4 mt-6">
       <h2 className="text-lg font-bold mb-4">Notifications</h2>
-      {loading ? (
-        <div className="text-gray-500">Loading...</div>
-      ) : notifications.length === 0 ? (
-        <div className="text-gray-500">No notifications yet.</div>
+      {notifications.length === 0 ? (
+        <div className="text-gray-400 text-sm">No notifications yet.</div>
       ) : (
-        <ul className="space-y-3">
-          {notifications.map((notif) => (
-            <li key={notif.id} className="border-b pb-2 last:border-b-0">
-              <div className="text-sm">{notif.message}</div>
-              <div className="text-xs text-gray-400 mt-1">{notif.createdAt}</div>
-            </li>
+        <div className="divide-y">
+          {notifications.map((n) => (
+            <NotificationItem key={n._id} notification={n} />
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

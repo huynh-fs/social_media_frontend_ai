@@ -39,8 +39,8 @@ const FeedTimeline: React.FC = () => {
   }, [fetchPosts]);
 
   return (
-    <div className="flex flex-col h-full">
-      <h1 className="text-2xl font-bold mb-4 py-6">Home</h1>
+    <div className="flex flex-col h-full py-6">
+      {/* <h1 className="text-2xl font-bold mb-4 py-6"></h1> */}
       <CreatePostForm onPostCreated={handlePostCreated} />
     <div className="space-y-4 mt-4 overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {loading ? (

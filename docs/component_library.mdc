@@ -294,3 +294,97 @@ Tsx
 const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 Kích hoạt: Nút "Edit Profile" trong ProfilePanel.tsx sẽ gọi setIsEditModalOpen(true).
 Đóng: EditProfileModal sẽ gọi onClose={() => setIsEditModalOpen(false)} khi cần đóng.
+
+## 8. Components cho Chức năng Bình luận
+
+Đây là các component tạo nên khu vực bình luận bên dưới mỗi bài viết trong `PostCard`.
+
+### 8.1. CommentSection (`src/features/post/components/CommentSection.tsx`)
+
+- **Mục tiêu:** Một component container chính, hiển thị form để viết bình luận và danh sách các bình luận đã có.
+- **Vị trí:** Sẽ được render có điều kiện bên trong `PostCard.tsx`.
+- **Props:**
+  ```typescript
+  interface CommentSectionProps {
+    postId: string;
+  }
+Cấu trúc:
+Một div container chính với margin-top (mt-4).
+Component CommentForm ở trên cùng.
+Một div để hiển thị danh sách các CommentItem.
+State & Logic:
+Sử dụng một custom hook useFetchComments(postId) để lấy danh sách bình luận cho bài viết.
+Hook này sẽ quản lý state comments, isLoading, error.
+Khi một bình luận mới được gửi thành công (thông qua CommentForm), component này cần cập nhật lại danh sách bình luận.
+8.2. CommentForm (src/features/post/components/CommentForm.tsx)
+Mục tiêu: Một form "inline" đơn giản để người dùng nhập và gửi bình luận.
+Props:
+code
+TypeScript
+interface CommentFormProps {
+  postId: string;
+  onCommentPosted: (newComment: IComment) => void; // Callback để cập nhật UI ngay lập tức
+}
+Cấu trúc:
+Một div với flex items-start space-x-3.
+Avatar của người dùng đang đăng nhập.
+Một thẻ <form> chứa:
+Input component (từ common) được style như một ô chat, có placeholder "Write a comment...".
+Button component (có thể chỉ là icon "Send") để submit.
+State & Logic:
+useState để quản lý nội dung bình luận (text).
+Sử dụng một custom hook useSubmitComment để xử lý logic gọi API POST /api/posts/:id/comments.
+Khi gửi thành công, gọi callback onCommentPosted với dữ liệu bình luận mới và reset ô input.
+8.3. CommentItem (src/features/post/components/CommentItem.tsx)
+Mục tiêu: Hiển thị một bình luận duy nhất.
+Props:
+code
+TypeScript
+interface CommentItemProps {
+  comment: IComment; // IComment là interface cho dữ liệu bình luận từ API
+}
+Cấu trúc:
+Một div với flex items-start space-x-3.
+Avatar của người viết bình luận.
+Một div chứa:
+Tên người dùng (font-bold).
+Nội dung bình luận (text).
+Dấu thời gian (text-sm text-gray-500).
+8.4. Cập nhật PostCard.tsx
+Mục tiêu: Tích hợp CommentSection và quản lý trạng thái hiển thị của nó.
+Logic cần thêm:
+Tạo một state mới: const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false);.
+Nút icon "Comment" trong Action Bar sẽ có một onClick handler để đảo ngược giá trị của state này: setIsCommentSectionOpen(!isCommentSectionOpen).
+Bên dưới Action Bar, render CommentSection một cách có điều kiện:
+code
+Tsx
+{isCommentSectionOpen && <CommentSection postId={post._id} />}
+
+### 8.4. Cập nhật `PostCard.tsx` (Thêm logic Like)
+
+- **Mục tiêu:** Cho phép người dùng thích/bỏ thích một bài viết với phản hồi giao diện ngay lập tức.
+- **State & Logic cần thêm:**
+  1.  **State cục bộ:** `PostCard` sẽ tự quản lý trạng thái "đã thích" và "số lượt thích" của riêng nó để có thể cập nhật ngay lập tức.
+      ```typescript
+      const [isLikedByCurrentUser, setIsLikedByCurrentUser] = useState(false);
+      const [currentLikeCount, setCurrentLikeCount] = useState(0);
+      ```
+  2.  **`useEffect` để khởi tạo state:** Khi component được mount hoặc prop `post` thay đổi, một `useEffect` sẽ chạy để kiểm tra xem `user` hiện tại (từ `authStore`) có nằm trong danh sách người đã thích bài viết hay không và đặt giá trị ban đầu cho `isLikedByCurrentUser` và `currentLikeCount`. (Backend cần trả về danh sách người đã thích hoặc ít nhất là `isLikedByCurrentUser`).
+  3.  **Hành động `onClick` trên nút Like:**
+      - **Optimistic Update:** Ngay lập tức đảo ngược trạng thái `isLikedByCurrentUser` và tăng/giảm `currentLikeCount`.
+      - **Gọi API dưới nền:** Gọi đến hàm `toggleLike` từ custom hook `useLikePost`.
+      - **Xử lý lỗi (Rollback):** Nếu cuộc gọi API thất bại, đảo ngược lại trạng thái UI về ban đầu và có thể hiển thị một thông báo lỗi.
+- **Styling:** Icon "Like" sẽ thay đổi màu sắc (ví dụ: từ xám sang đỏ) và có thể là icon khác (ví dụ: từ trái tim rỗng sang trái tim đầy) dựa trên state `isLikedByCurrentUser`.
+
+---
+
+### 8.5. Custom Hook: `useLikePost` (`src/features/post/hooks/useLikePost.ts`)
+
+- **Mục tiêu:** Đóng gói logic gọi API `POST /api/posts/:id/like` và xử lý các trạng thái.
+- **Cấu trúc:**
+  - Hook này không cần trả về nhiều state, nó chủ yếu cung cấp một hàm hành động.
+  - Trả về một object: `{ toggleLike, isLoading }`.
+- **Hàm `toggleLike`:**
+  - Là một hàm `async` nhận vào `postId: string`.
+  - Nó sẽ gọi đến hàm service API tương ứng.
+  - Nó không cần trả về dữ liệu, nhưng có thể `throw error` nếu thất bại để component gọi nó có thể bắt lỗi và rollback UI.
