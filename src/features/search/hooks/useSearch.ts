@@ -1,3 +1,4 @@
+import { api } from '@/api/axiosConfig';
 import { useEffect, useState } from 'react';
 
 export interface SearchResult {
@@ -15,9 +16,8 @@ export function useSearch(query: string) {
       return;
     }
     setLoading(true);
-    fetch(`/api/search?q=${encodeURIComponent(query)}`)
-      .then((res) => res.json())
-      .then((data) => setResults(data))
+    api.get<SearchResult>(`/posts/search?q=${encodeURIComponent(query)}`)
+      .then((res) => setResults(res.data))
       .catch(() => setResults({ users: [], posts: [] }))
       .finally(() => setLoading(false));
   }, [query]);

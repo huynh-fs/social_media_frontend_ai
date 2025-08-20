@@ -40,7 +40,22 @@ Dự án tuân thủ cấu trúc dựa trên chức năng (feature-based).
 │   ├── notifications/        # ✨ Feature mới
 │   │   ├── components/       # NotificationItem.tsx
 │   │   └── NotificationsPanel.tsx
-│
+|   ├── layout/ # ✨ Mới: Chứa các phần của bố cục chính
+│   │ ├── components/ # MainLayout.tsx, SidebarNav.tsx, RightSidebar.tsx
+│   ├── feed/ # ✨ Đổi tên từ 'post' để rõ ràng hơn
+│   │ ├── components/ # FeedTimeline.tsx, CreatePostForm.tsx, PostCard.tsx
+│   │ └── FeedPage.tsx # Trang chính, sẽ được render trong Outlet
+│   ├── profile/ # ✨ Feature mới
+│   │ └── ProfilePage.tsx # Trang cá nhân, sẽ được render trong Outlet
+│   ├── right_sidebar_panels/ # ✨ Mới: Chứa các component cho cột phải
+│   │ ├── DefaultWidgetsPanel.tsx
+│   │ ├── ExplorePanel.tsx
+│   │ └── NotificationsPanel.tsx
+│    └── ... (auth, etc.)
+│ 
+├── stores/
+│ ├── authStore.ts
+│ └── rightSidebarStore.ts # ✨ Mới: Store để quản lý cột phải
 ├── hooks/ # Hooks tái sử dụng toàn cục
 │ └── useAuthStatus.ts
 │
@@ -81,36 +96,66 @@ Dự án tuân thủ cấu trúc dựa trên chức năng (feature-based).
 - **State Máy chủ (Server State):** Quản lý qua các **custom hooks** trong thư mục `features/**/hooks/`. Mỗi hook chịu trách nhiệm fetch, cache, và quản lý (loading, error) cho một nguồn dữ liệu cụ thể.
 - **State Cục bộ (Local State):** Luôn ưu tiên `useState` cho state của một component.
 
-## 4. Routing (React Router v6)
+- **`rightSidebarStore.ts` (Mới):**
+  - Đây là store Zustand chịu trách nhiệm quản lý component nào đang được hiển thị ở cột bên phải.
+  - **Cấu trúc State:**
+    ```typescript
+    type PanelType = 'DEFAULT' | 'EXPLORE' | 'NOTIFICATIONS' | 'MESSAGES';
+
+    interface IRightSidebarState {
+      activePanel: PanelType;
+      setActivePanel: (panel: PanelType) => void;
+    }
+    ```
+  - **Logic:** `SidebarNav` sẽ gọi `setActivePanel` khi một mục được nhấp vào. `RightSidebar` sẽ đọc `activePanel` để quyết định render component nào.
+
 
 ## 4. Routing (React Router v6 & Nested Routes)
 
-- **Cấu trúc lồng nhau:** Ứng dụng sẽ sử dụng nested routes để quản lý nội dung động ở cột bên phải.
-- **Component Layout gốc:** `MainLayout` sẽ là route cha.
-- **Component `<Outlet />`:** Sẽ được đặt trong cột bên phải của `MainLayout`.
-- **Ví dụ về cách định nghĩa routes trong `App.tsx`:**
+- **Mô hình:** Sử dụng `<Outlet />` cho nội dung chính (cột giữa), không còn nested routes cho cột phải.
+- **`MainLayout.tsx`:** Là component layout gốc, chứa `SidebarNav`, **khu vực `<Outlet />` cho cột giữa**, và `RightSidebar`.
+- **`App.tsx` - Cấu trúc Route mới:**
   ```tsx
   <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<RegisterPage />} />
-    
-    {/* Route cha được bảo vệ */}
+
+    {/* Route cha được bảo vệ, render MainLayout */}
     <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
       
-      {/* Route con mặc định (index) cho cột phải */}
-      <Route index element={<DefaultWidgetsPanel />} />
-      
-      {/* Các route con khác cho cột phải */}
-      <Route path="explore" element={<ExplorePanel />} />
-      <Route path="notifications" element={<NotificationsPanel />} />
-      <Route path="messages" element={<MessagesPanel />} />
-      
-      {/* Route profile có thể là một trang riêng hoặc cũng là một panel */}
-      <Route path="profile/:id" element={<ProfilePage />} /> 
+      {/* Các route con này sẽ được render vào <Outlet /> ở CỘT GIỮA */}
+      <Route index element={<FeedPage />} />
+      <Route path="profile/:id" element={<ProfilePage />} />
+      <Route path="post/:id" element={<PostDetailPage />} />
+      {/* Thêm các trang chính khác ở đây */}
 
     </Route>
   </Routes>
-Lưu ý: Trang Feed chính ở cột giữa không còn là một "page" riêng lẻ, mà là một phần cố định của MainLayout.
+
+Cấu trúc Component Layout (Cập nhật lớn)
+MainLayout.tsx
+Vị trí: src/features/layout/components/MainLayout.tsx
+Cấu trúc Grid: Vẫn là 3 cột trên desktop.
+Cột Trái: Render <SidebarNav />.
+Cột Giữa: Render <Outlet /> từ react-router-dom. Đây là nơi FeedPage, ProfilePage, etc., sẽ xuất hiện.
+Cột Phải: Render <RightSidebar />.
+SidebarNav.tsx
+Vị trí: src/features/layout/components/SidebarNav.tsx
+Logic Cập nhật:
+KHÔNG sử dụng NavLink hoặc Link cho các mục như "Explore", "Notifications".
+Thay vào đó, mỗi mục sẽ là một <button> với onClick handler.
+onClick sẽ gọi đến action setActivePanel từ rightSidebarStore.
+Mục "Home" sẽ dùng useNavigate để điều hướng về /.
+Mục "Profile" sẽ dùng useNavigate để điều hướng về /profile/:id.
+RightSidebar.tsx
+Vị trí: src/features/layout/components/RightSidebar.tsx
+Logic Cập nhật:
+Component này sẽ "lắng nghe" state activePanel từ rightSidebarStore.
+Sử dụng một câu lệnh switch hoặc if/else để render component tương ứng:
+Nếu activePanel là 'EXPLORE', render <ExplorePanel />.
+Nếu activePanel là 'NOTIFICATIONS', render <NotificationsPanel />.
+Mặc định ('DEFAULT'), render <DefaultWidgetsPanel />.
+
 ## 5. Styling và Theme (Tailwind CSS)
 - Quy ước:
     1. Sử dụng các giá trị đã định nghĩa trong tailwind.config.js (ví dụ: bg-primary) thay vì các giá trị tùy ý.

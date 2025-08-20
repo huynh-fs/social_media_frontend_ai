@@ -1,7 +1,7 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import SidebarNav from '../../features/navigation/components/SidebarNav';
-import FeedTimeline from '../../features/post/components/FeedTimeline';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import SidebarNav from "../../features/navigation/components/SidebarNav";
+import RightSidebar from "./RightSidebar";
 
 const MainLayout: React.FC = () => {
   return (
@@ -11,13 +11,13 @@ const MainLayout: React.FC = () => {
         <aside className="hidden lg:block col-span-2 h-screen sticky top-0">
           <SidebarNav />
         </aside>
-        {/* Main Feed Content - scrollable */}
+        {/* Main Content Area - scrollable */}
         <main className="col-span-12 lg:col-span-7 h-screen">
-          <FeedTimeline />
+          <Outlet />
         </main>
         {/* Right Sidebar - fixed */}
         <aside className="hidden lg:block col-span-3 h-screen sticky top-0">
-          <Outlet />
+          <RightSidebar />
         </aside>
       </div>
     </div>

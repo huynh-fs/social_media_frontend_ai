@@ -78,3 +78,18 @@ Khi ứng dụng phát triển, có thể cần thêm các store khác. Ví dụ
 notificationStore: Quản lý việc hiển thị các thông báo toast (thành công, lỗi) trên toàn ứng dụng.
 modalStore: Quản lý trạng thái đóng/mở của các modal global.
 Mỗi store mới đều phải tuân theo cấu trúc tương tự authStore: tách biệt state và actions, và chỉ chứa những state thực sự cần thiết ở phạm vi toàn cục.
+
+## 4. `feedStore` - Cửa hàng Quản lý Dòng thời gian
+
+- **Vị trí:** `src/stores/feedStore.ts`
+- **Mục tiêu:** Quản lý các tương tác động với dòng thời gian chính, chẳng hạn như thêm một bài viết mới vào đầu danh sách mà không cần fetch lại toàn bộ.
+- **Cấu trúc State (`IFeedState`):**
+  ```typescript
+  interface IFeedState {
+    // Mảng chứa các bài viết được thêm vào từ các nguồn khác (search, real-time)
+    prependedPosts: IPost[];
+    // Action để thêm một bài viết vào đầu danh sách
+    prependPost: (post: IPost) => void;
+    // Action để xóa tất cả các bài viết đã thêm (khi người dùng refresh feed)
+    clearPrependedPosts: () => void;
+  }

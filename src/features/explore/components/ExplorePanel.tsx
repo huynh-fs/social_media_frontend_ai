@@ -4,7 +4,7 @@ import SearchBar from '../../search/components/SearchBar';
 
 const ExplorePanel: React.FC = () => {
   return (
-    <div className="flex flex-col space-y-4 py-6">
+    <div className="flex flex-col space-y-4 py-2">
       <SearchBar />
       {/* <TrendingTopics /> */}
     </div>

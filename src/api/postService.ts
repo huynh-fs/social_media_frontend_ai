@@ -23,3 +23,18 @@ export const getFeedPosts = async () => {
     throw error;
   }
 };
+
+export const getPostById = async (postId: string) => {
+  try {
+    const response = await api.get(`/posts/${postId}`);
+    return response.data;
+  } catch (error) {
+    // Optionally format error
+    throw error;
+  }
+};
+
+export const fetchPostsByUserId = async (userId: string)=> {
+  const response = await api.get(`/posts/user/${userId}`);
+  return response.data;
+};

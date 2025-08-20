@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import CreatePostForm from './CreatePostForm';
-import PostCard from './PostCard/PostCard';
-import { getFeedPosts } from '../../../api/postService';
+import React, { useCallback, useEffect, useState } from "react";
+import CreatePostForm from "./CreatePostForm";
+import PostCard from "./PostCard/PostCard";
+import { getFeedPosts } from "../../../api/postService";
+import { useFeedStore } from "../../../stores/feedStore";
 
 interface IPost {
   _id: string;
@@ -17,6 +18,7 @@ interface IPost {
 const FeedTimeline: React.FC = () => {
   const [posts, setPosts] = useState<IPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const prependedPosts = useFeedStore((s) => s.prependedPosts);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -40,17 +42,40 @@ const FeedTimeline: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full py-6">
-      {/* <h1 className="text-2xl font-bold mb-4 py-6"></h1> */}
       <CreatePostForm onPostCreated={handlePostCreated} />
-    <div className="space-y-4 mt-4 overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div
+        className="space-y-4 mt-4 overflow-y-auto scrollbar-hide"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         {loading ? (
           <div className="text-gray-500">Loading feed...</div>
-        ) : posts.length === 0 ? (
-          <div className="text-gray-500">No posts yet.</div>
         ) : (
-          posts.length > 0 && posts.map((post) => (
-            <PostCard key={post._id} post={post} onLike={() => {}} onComment={() => {}} />
-          ))
+          <>
+            {/* Hiển thị các bài viết prepended trước */}
+            {prependedPosts.map((post) => (
+              <PostCard
+                key={post._id}
+                post={post}
+                onLike={() => {}}
+                onComment={() => {}}
+              />
+            ))}
+            {/* Hiển thị các bài viết từ API, đã lọc trùng với prependedPosts */}
+            {posts
+              .filter((post) => !prependedPosts.some((p) => p._id === post._id))
+              .map((post) => (
+                <PostCard
+                  key={post._id}
+                  post={post}
+                  onLike={() => {}}
+                  onComment={() => {}}
+                />
+              ))}
+            {/* Nếu không có bài viết nào */}
+            {prependedPosts.length === 0 && posts.length === 0 && (
+              <div className="text-gray-500">No posts yet.</div>
+            )}
+          </>
         )}
       </div>
     </div>

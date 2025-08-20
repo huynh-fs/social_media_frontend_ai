@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import CommentSection from '../CommentSection';
 import { formatDate } from '../../../../lib/formatDate';
 import { useLikePost } from '../../hooks/useLikePost';
+import { useNavigate } from 'react-router-dom';
 
 interface IPost {
   _id: string;
@@ -18,11 +19,12 @@ interface IPost {
 
 export interface PostCardProps {
   post: IPost;
-  onLike: (postId: string) => void;
-  onComment: (postId: string) => void;
+  onLike?: (postId: string) => void;
+  onComment?: (postId: string) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment }) => {
+  const navigate = useNavigate();
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser ?? false);
   const [likeCount, setLikeCount] = useState(
@@ -50,10 +52,25 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment }) =
     }
   };
 
+  // Hàm highlight hashtag
+  const renderContentWithHashtags = (content: string) => {
+    const parts = content.split(/(#[\w]+)/g);
+    return parts.map((part, idx) => {
+      if (/^#[\w]+$/.test(part)) {
+        return (
+          <span key={idx} className="text-blue-600 font-semibold cursor-pointer hover:underline">{part}</span>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="bg-white border rounded-md p-4 mb-4" key={post._id}>
       {/* Header */}
-      <div className="flex items-center mb-2">
+      <div className="flex items-center mb-2 cursor-pointer"
+        onClick={() => navigate(`/profile/${post.user._id}`)}
+      >
         <img
           src={post.user.avatarUrl || 'https://static.vecteezy.com/system/resources/previews/036/280/651/large_2x/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-illustration-vector.jpg'}
           alt="avatar"
@@ -65,7 +82,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment }) =
         </div>
       </div>
       {/* Body */}
-      <div className="mb-2">{post.content}</div>
+      <div className="mb-2">{renderContentWithHashtags(post.content)}</div>
       {post.imageURL && (
         <img src={post.imageURL} alt="post" className="rounded-md mb-2 w-full object-cover" />
       )}

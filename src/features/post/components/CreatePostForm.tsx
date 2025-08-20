@@ -3,6 +3,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import { useCreatePost } from '../hooks/useCreatePost';
 import { useAuthStore } from '../../../stores/authStore';
 import {Button} from '../../../components/common/Button';
+import { FaPaperPlane } from 'react-icons/fa';
 
 interface CreatePostFormProps {
   onPostCreated?: () => void;
@@ -48,29 +49,49 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
 
   const isPostDisabled = !content.trim() && !imageFile;
 
+  // Hàm highlight hashtag
+  const renderContentWithHashtags = (content: string) => {
+    const parts = content.split(/(#[\w]+)/g);
+    return parts.map((part, idx) => {
+      if (/^#[\w]+$/.test(part)) {
+        return (
+          <span key={idx} className="text-blue-500 cursor-pointer hover:underline">{part}</span>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="bg-white px-4 py-2 border-b">
       <form onSubmit={handleSubmit} className="flex flex-col">
         <div className="flex space-x-4">
           {/* Avatar */}
           <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                {user && 
+            {user && 
               <img src={user.avatarUrl || 'https://static.vecteezy.com/system/resources/previews/036/280/651/large_2x/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-illustration-vector.jpg'}
               alt={user.username} 
               className="w-full h-full object-cover" />
             }
-
           </div>
           {/* Textarea */}
-          <TextareaAutosize
-            className="flex-1 resize-none border-none focus:border-none focus:ring-0 text-lg placeholder-gray-500 outline-none"
-            minRows={2}
-            maxRows={6}
-            placeholder="What's happening?"
-            value={content}
-            onChange={handleContentChange}
-            disabled={isLoading}
-          />
+          <div className="flex-1 relative">
+            <TextareaAutosize
+              className="w-full resize-none border-none focus:border-none focus:ring-0 text-lg placeholder-gray-500 outline-none bg-transparent z-10 relative text-transparent caret-blue-500"
+              minRows={2}
+              maxRows={6}
+              placeholder="What's happening?"
+              value={content}
+              onChange={handleContentChange}
+              disabled={isLoading}
+            />
+            {/* Hashtag preview */}
+            {content && (
+              <div className="absolute top-0 left-0 w-full h-full pointer-events-none text-lg z-0 px-0 py-0 whitespace-pre-wrap">
+                {renderContentWithHashtags(content)}
+              </div>
+            )}
+          </div>
         </div>
         {/* Image Preview */}
         {imagePreview && (
@@ -110,7 +131,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
             isLoading={isLoading}
             disabled={isPostDisabled || isLoading}
           >
-            Post
+            <FaPaperPlane />
           </Button>
         </div>
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}

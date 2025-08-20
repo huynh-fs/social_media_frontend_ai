@@ -200,6 +200,16 @@ interface PostCardProps {
   2. `useSearch` sẽ gọi API `GET /api/search?q=...`.
   3. Hiển thị kết quả trong dropdown, được phân nhóm thành "Users" và "Posts".
 
+   **Logic Cập nhật (Tương tác):**
+  1.  Dropdown kết quả sẽ được chia thành hai nhóm: "Users" và "Posts".
+  2.  Mỗi mục kết quả là một component `SearchResultItem`.
+  3.  **Khi nhấp vào một `SearchResultItem` là User:**
+      - Sử dụng hook `useNavigate` từ `react-router-dom` để điều hướng đến trang profile của user đó (ví dụ: `/profile/{user._id}`).
+      - Sau khi điều hướng, cần xóa nội dung ô tìm kiếm và đóng dropdown.
+  4.  **Khi nhấp vào một `SearchResultItem` là Post:**
+      - Gọi action `prependPost` từ `feedStore` để thêm bài viết đó vào đầu danh sách trên feed.
+      - Xóa nội dung ô tìm kiếm và đóng dropdown.
+
 ### 4.3. FollowSuggestions (`src/features/users/components/FollowSuggestions.tsx`)
 
 - **Mục tiêu:** Hiển thị một danh sách các tài khoản được gợi ý để theo dõi.
@@ -388,3 +398,68 @@ Tsx
   - Là một hàm `async` nhận vào `postId: string`.
   - Nó sẽ gọi đến hàm service API tương ứng.
   - Nó không cần trả về dữ liệu, nhưng có thể `throw error` nếu thất bại để component gọi nó có thể bắt lỗi và rollback UI.
+
+
+---
+## 9. Components cho Trang Profile
+
+Đây là các component tạo nên trang chi tiết thông tin người dùng.
+
+### 9.1. ProfilePage (`src/features/profile/ProfilePage.tsx`)
+
+- **Mục tiêu:** Component trang chính, hiển thị toàn bộ thông tin của một người dùng.
+- **Vị trí:** `src/features/profile/ProfilePage.tsx`
+- **Routing:** Sẽ được render trong `<Outlet />` của `MainLayout` khi URL là `/profile/:id`.
+- **Cấu trúc:**
+  - Một `div` container chính.
+  - Component `ProfileHeader` ở trên cùng.
+  - Một thanh điều hướng (tabs) bên dưới header để chuyển đổi giữa các mục như "Posts", "Likes", "Media" (triển khai sau).
+  - Khu vực nội dung chính, ban đầu sẽ hiển thị danh sách các bài viết của người dùng đó (`UserPostsList`).
+- **State & Logic:**
+  - Sử dụng `useParams` từ `react-router-dom` để lấy `id` của người dùng từ URL.
+  - Sử dụng một custom hook `useFetchUserProfile(userId)` để lấy toàn bộ dữ liệu của người dùng từ một API backend mới.
+  - Quản lý trạng thái loading và error.
+
+### 9.2. ProfileHeader (`src/features/profile/components/ProfileHeader.tsx`)
+
+- **Mục tiêu:** Component hiển thị phần "đầu trang" của profile, bao gồm ảnh bìa, avatar, tên và các nút hành động.
+- **Props:**
+  ```typescript
+  interface ProfileHeaderProps {
+    user: IProfileUser; // IProfileUser là một interface chi tiết cho dữ liệu profile
+  }
+
+Cấu trúc:
+Một div container.
+Ảnh bìa (Banner): Một div hoặc img với ảnh bìa của người dùng. Có một màu nền mặc định.
+Khu vực Avatar & Actions (flex justify-between items-end):
+Avatar: img lớn, bo tròn, có viền trắng, được đặt chồng lên một phần ảnh bìa (sử dụng margin âm, ví dụ -mt-16).
+Nút Hành động:
+Logic: So sánh profileUserId với currentUserId (lấy từ authStore).
+Nếu là profile của chính mình: Hiển thị nút "Edit Profile" (sử dụng component Button variant='secondary'). Nút này sẽ mở EditProfileModal.
+Nếu là profile của người khác: Hiển thị nút "Follow" hoặc "Unfollow".
+Thông tin người dùng:
+Tên hiển thị (displayName hoặc username) - font-bold, kích thước lớn.
+Tên người dùng (@username) - màu xám, kích thước nhỏ.
+Tiểu sử (bio).
+Thông tin số liệu (flex space-x-4): Ví dụ, "X Following" và "Y Followers".
+9.3. FollowButton (src/features/profile/components/FollowButton.tsx)
+Mục tiêu: Một component nút chuyên dụng để xử lý logic follow/unfollow.
+Props:
+code
+TypeScript
+interface FollowButtonProps {
+  targetUserId: string;
+  isInitiallyFollowing: boolean;
+}
+State & Logic:
+Sử dụng useState để quản lý trạng thái isFollowing hiện tại, được khởi tạo từ isInitiallyFollowing.
+Sử dụng custom hook useFollowToggle để gọi API.
+Hành vi:
+Khi isFollowing là false, nút hiển thị "Follow". Khi click, gọi followUser(targetUserId) và set isFollowing thành true.
+Khi isFollowing là true, nút hiển thị "Following". Khi click, gọi unfollowUser(targetUserId) và set isFollowing thành false.
+Quản lý trạng thái isLoading.
+9.4. UserPostsList (src/features/profile/components/UserPostsList.tsx)
+Mục tiêu: Hiển thị danh sách các bài viết đã được đăng bởi người dùng của trang profile.
+Props: userId: string.
+Logic: Sử dụng một custom hook useFetchUserPosts(userId) để gọi API lấy bài viết của người dùng đó. Render danh sách các PostCard.
