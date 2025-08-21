@@ -13,6 +13,7 @@ interface IChatState {
     addMessage: (message: IMessage) => void;
     setMessages: (participantId: string, messages: IMessage[]) => void;
     openChatWithNewMessage: (message: IMessage) => void;
+    markSessionAsSeen: (participantId: string) => void; // ✨ 2. Thêm action mới
     initializeChatListener: () => () => void; // Trả về hàm dọn dẹp
   };
 }
@@ -26,11 +27,13 @@ export const useChatStore = create<IChatState>()(
       actions: {
         openChat: (participant) => {
           const currentState = get();
-          const existingSession = currentState.openChatSessions[participant._id];
+          const existingSession =
+            currentState.openChatSessions[participant._id];
 
           // Nếu session đã tồn tại (chỉ cần đưa lên trước), không cần làm gì thêm
           if (existingSession) {
-            const { [participant._id]: _, ...rest } = currentState.openChatSessions;
+            const { [participant._id]: _, ...rest } =
+              currentState.openChatSessions;
             set({
               openChatSessions: {
                 ...rest,
@@ -39,12 +42,13 @@ export const useChatStore = create<IChatState>()(
             });
             return;
           }
-          
+
           // Tạo session mới với trạng thái loading
           const newSession: IChatSession = {
             participant,
             messages: [],
             isLoadingHistory: true,
+            hasUnseenMessages: false,
           };
 
           // Logic giới hạn 3 box chat không đổi
@@ -87,12 +91,15 @@ export const useChatStore = create<IChatState>()(
               set((state) => {
                 const currentSession = state.openChatSessions[participant._id];
                 if (currentSession) {
-                    return {
-                        openChatSessions: {
-                            ...state.openChatSessions,
-                            [participant._id]: { ...currentSession, isLoadingHistory: false }
-                        }
-                    }
+                  return {
+                    openChatSessions: {
+                      ...state.openChatSessions,
+                      [participant._id]: {
+                        ...currentSession,
+                        isLoadingHistory: false,
+                      },
+                    },
+                  };
                 }
                 return state;
               });
@@ -111,18 +118,24 @@ export const useChatStore = create<IChatState>()(
             const currentUser = useAuthStore.getState().user;
             if (!currentUser) return state;
 
-            const participantId =
-              newMessage.sender._id === currentUser._id
-                ? newMessage.receiver._id
-                : newMessage.sender._id;
+            const isMyOwnMessage = newMessage.sender._id === currentUser._id;
+            const participantId = isMyOwnMessage
+              ? newMessage.receiver._id
+              : newMessage.sender._id;
 
             const session = state.openChatSessions[participantId];
             if (!session) return state;
 
+            const newHasUnseenMessages = !isMyOwnMessage
+              ? true
+              : session.hasUnseenMessages;
+
             let newMessages = [...session.messages];
 
             // Kiểm tra nếu tin nhắn đã tồn tại
-            const existingIndex = newMessages.findIndex((m) => m._id === newMessage._id);
+            const existingIndex = newMessages.findIndex(
+              (m) => m._id === newMessage._id,
+            );
             if (existingIndex !== -1) {
               // Nếu tìm thấy, thay thế tin nhắn cũ
               newMessages[existingIndex] = newMessage;
@@ -142,6 +155,7 @@ export const useChatStore = create<IChatState>()(
                 [participantId]: {
                   ...session,
                   messages: newMessages,
+                  hasUnseenMessages: newHasUnseenMessages,
                 },
               },
             };
@@ -169,9 +183,23 @@ export const useChatStore = create<IChatState>()(
           if (!session) {
             get().actions.openChat(message.sender);
           }
-          
+
           // Sau đó, thêm tin nhắn vào (logic này sẽ đảm bảo tin nhắn được thêm vào đúng session)
           get().actions.addMessage(message);
+        },
+        markSessionAsSeen: (participantId) => {
+          set((state) => {
+            const session = state.openChatSessions[participantId];
+            if (session && session.hasUnseenMessages) {
+              return {
+                openChatSessions: {
+                  ...state.openChatSessions,
+                  [participantId]: { ...session, hasUnseenMessages: false },
+                },
+              };
+            }
+            return state;
+          });
         },
         // Hàm quan trọng để lắng nghe sự kiện
         initializeChatListener: () => {

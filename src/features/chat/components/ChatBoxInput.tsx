@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 
 type ChatBoxInputProps = {
   onSendMessage: (content: string) => void;
+  onFocus: () => void;
 };
 
-export const ChatBoxInput: React.FC<ChatBoxInputProps> = ({ onSendMessage }) => {
+export const ChatBoxInput: React.FC<ChatBoxInputProps> = ({ onSendMessage, onFocus }) => {
   const [content, setContent] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -23,6 +24,7 @@ export const ChatBoxInput: React.FC<ChatBoxInputProps> = ({ onSendMessage }) => 
           type="text"
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          onFocus={onFocus}
           placeholder="Type a message..."
           className="w-full px-3 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
         />

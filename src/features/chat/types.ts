@@ -39,4 +39,5 @@ export interface IChatSession {
   messages: IMessage[];
   unreadCount?: number;
   isLoadingHistory?: boolean;
+  hasUnseenMessages?: boolean; // ✨ 1. Thêm trạng thái "chưa xem"
 }
