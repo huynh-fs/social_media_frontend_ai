@@ -3,6 +3,7 @@ import { useAuthStore } from "../../../stores/authStore";
 import { Button } from "../../../components/common/Button";
 import { IProfileUser } from "../types";
 import { FollowButton } from "./FollowButton";
+import { useChatStore } from "@/features/chat/stores/chatStore";
 
 type ProfileHeaderProps = {
   user: IProfileUser;
@@ -11,6 +12,19 @@ type ProfileHeaderProps = {
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => {
   const currentUser = useAuthStore((state) => state.user);
   const isOwnProfile = currentUser?._id === user._id;
+
+  const { openChat } = useChatStore((state) => state.actions); // ✨ 2. Lấy action openChat
+
+  const handleMessageClick = () => {
+    // ✨ 3. Hàm xử lý khi nhấn nút Message
+    // Cần đảm bảo `user` object có đủ thông tin cho `IChatUser`
+    const participant = {
+      _id: user._id,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+    };
+    openChat(participant);
+  };
 
   const defaultBannerUrl = "/banners/default-banner.jpg"; // Từ thư mục public
   const defaultAvatarUrl =
@@ -43,10 +57,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => {
             {isOwnProfile ? (
               <Button variant="secondary">Edit Profile</Button>
             ) : (
-              <FollowButton
-                targetUserId={user._id}
-                isInitiallyFollowing={user.isFollowing}
-              />
+              <>
+                {/* ✨ 4. Thêm nút "Message" ở đây */}
+                <Button variant="secondary" onClick={handleMessageClick}>
+                  Message
+                </Button>
+                <FollowButton targetUserId={user._id} isInitiallyFollowing={user.isFollowing} />
+              </>
             )}
           </div>
         </div>

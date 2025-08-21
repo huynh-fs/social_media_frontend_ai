@@ -1,23 +1,23 @@
-import React, { useEffect } from 'react';
-import { useNotificationStore } from '../../../stores/notificationStore';
-import NotificationItem from './NotificationItem';
+import React, { useEffect } from "react";
+import { useNotificationStore } from "../../../stores/notificationStore";
+import NotificationItem from "./NotificationItem";
 
 const NotificationsPanel: React.FC = () => {
   const notifications = useNotificationStore((s) => s.notifications);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
-  const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
-  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
+  // const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
+  // const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  // useEffect(() => {
+  //   fetchNotifications();
+  // }, []);
 
-  useEffect(() => {
-    if (unreadCount > 0) {
-      // Optionally call API to mark all as read
-      markAllAsRead();
-    }
-  }, [unreadCount, markAllAsRead]);
+  // useEffect(() => {
+  //   if (unreadCount > 0) {
+  //     // Optionally call API to mark all as read
+  //     markAllAsRead();
+  //   }
+  // }, [unreadCount, markAllAsRead]);
 
   return (
     <div className="bg-white rounded-lg shadow p-4 mt-6">
