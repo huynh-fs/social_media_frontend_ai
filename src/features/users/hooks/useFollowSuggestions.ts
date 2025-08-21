@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { SuggestionUser } from '../components/SuggestionItem';
+import { useEffect, useState } from "react";
+import { SuggestionUser } from "../components/SuggestionItem";
+import { fetchFollowSuggestions, followUser } from "@/api/userService";
 
 export function useFollowSuggestions() {
   const [suggestions, setSuggestions] = useState<SuggestionUser[]>([]);
@@ -7,17 +8,16 @@ export function useFollowSuggestions() {
 
   useEffect(() => {
     setLoading(true);
-    fetch('/api/users/suggestions')
-      .then((res) => res.json())
+    fetchFollowSuggestions()
       .then((data) => setSuggestions(data))
       .catch(() => setSuggestions([]))
       .finally(() => setLoading(false));
   }, []);
 
-  const followUser = async (userId: string) => {
-    await fetch(`/api/users/follow/${userId}`, { method: 'POST' });
+  const handleFollowUser = async (userId: string) => {
+    await followUser(userId);
     setSuggestions((prev) => prev.filter((u) => u._id !== userId));
   };
 
-  return { suggestions, followUser, loading };
+  return { suggestions, handleFollowUser, loading };
 }

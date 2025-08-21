@@ -19,7 +19,7 @@ const RightSidebar: React.FC = () => {
             alt=""
             className="w-full h-32 object-cover"
           />
-          <ExplorePanel />;
+          <ExplorePanel />
         </>
       );
       break;
@@ -31,7 +31,7 @@ const RightSidebar: React.FC = () => {
             alt=""
             className="w-full h-32 object-top"
           />
-          <NotificationsPanel />;
+          <NotificationsPanel />
         </>
       );
       break;
@@ -44,7 +44,7 @@ const RightSidebar: React.FC = () => {
             alt=""
             className="w-full h-32 object-top"
           />
-          <MessagesPanel />;
+          <MessagesPanel />
         </>
       );
       break;
@@ -56,7 +56,7 @@ const RightSidebar: React.FC = () => {
             alt=""
             className="w-full h-32 object-fill"
           />
-          <ProfilePanel />;
+          <ProfilePanel />
         </>
       );
       break;

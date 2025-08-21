@@ -14,3 +14,14 @@ export const followUser = async (userId: string): Promise<void> => {
 export const unfollowUser = async (userId: string): Promise<void> => {
   await api.post(`/users/${userId}/unfollow`);
 };
+
+export const fetchFollowSuggestions = async (): Promise<IProfileUser[]> => {
+  const response = await api.get('/users/suggestions');
+  return response.data;
+};
+
+
+export const fetchUserFollowers = async (userId: string): Promise<IProfileUser[]> => {
+  const response = await api.get(`/users/${userId}/followers`);
+  return response.data;
+};

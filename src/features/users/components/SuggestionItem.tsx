@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Button } from '../../../components/common/Button';
+import React, { useState } from "react";
+import { Button } from "../../../components/common/Button";
 
 export interface SuggestionUser {
   _id: string;
@@ -27,20 +27,23 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({ user, onFollow }) => {
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center space-x-3">
         <img
-          src={user.avatarUrl || 'https://via.placeholder.com/40'}
+          src={
+            user.avatarUrl ||
+            "https://static.vecteezy.com/system/resources/previews/036/280/651/large_2x/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-illustration-vector.jpg"
+          }
           alt="avatar"
           className="w-8 h-8 rounded-full object-cover"
         />
         <span className="font-medium">{user.username}</span>
       </div>
       <Button
-        variant={isFollowing ? 'primary' : 'secondary'}
+        variant={isFollowing ? "primary" : "secondary"}
         size="sm"
         disabled={isFollowing || loading}
         onClick={handleFollow}
         isLoading={loading}
       >
-        {isFollowing ? 'Following' : 'Follow'}
+        {isFollowing ? "Following" : "Follow"}
       </Button>
     </div>
   );
